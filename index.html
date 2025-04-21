@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, user-scalable=no"
+    />
+    <title>Tic Tac Toe</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: system-ui, sans-serif;
+        background: #f8f9fa;
+      }
+
+      #main {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      h1 {
+        margin: 20px 0 10px;
+        font-size: 1.5rem;
+        color: #333;
+      }
+
+      #board {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        grid-template-rows: repeat(3, 1fr);
+        gap: 4px;
+        width: 100%;
+        max-width: 500px;
+        aspect-ratio: 1;
+      }
+
+      .cell {
+        background: white;
+        border: 2px solid #ccc;
+        font-size: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        touch-action: manipulation;
+        transition: background 0.2s, opacity 0.5s ease;
+        border-radius: 10px;
+      }
+
+      .cell:active {
+        background: #eee;
+      }
+
+      .cell svg {
+        width: 60%;
+        height: 60%;
+      }
+
+      .x-icon path {
+        stroke: #ef4444;
+        stroke-width: 8;
+      }
+
+      .o-icon circle {
+        stroke: #3b82f6;
+        stroke-width: 8;
+      }
+
+      .faded {
+        opacity: 0.3;
+      }
+
+      #status {
+        margin-top: 15px;
+        font-size: 1.2rem;
+        color: #444;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="main">
+      <h1>Tic Tac Toe</h1>
+      <div id="board"></div>
+      <div id="status">Current Player: X</div>
+    </div>
+
+    <script>
+      const boardEl = document.getElementById("board");
+      const statusEl = document.getElementById("status");
+      const boardState = Array(9).fill(null);
+      const moveHistory = [];
+      let currentPlayer = "X";
+      let gameOver = false;
+      let lastFadedIndex = null;
+
+      const icons = {
+        X: `<svg class="x-icon" viewBox="0 0 100 100"><path d="M20,20 L80,80 M80,20 L20,80" fill="none"/></svg>`,
+        O: `<svg class="o-icon" viewBox="0 0 100 100"><circle cx="50" cy="50" r="30" fill="none"/></svg>`,
+      };
+
+      function createBoard() {
+        for (let i = 0; i < 9; i++) {
+          const btn = document.createElement("button");
+          btn.classList.add("cell");
+          btn.dataset.index = i;
+          btn.addEventListener("click", () => handleMove(i, btn));
+          boardEl.appendChild(btn);
+        }
+      }
+
+      function handleMove(index, btn) {
+        if (gameOver || boardState[index]) return;
+
+        applyMove(index, btn);
+        updateVisualState();
+
+        const winner = checkWinner();
+        if (winner) {
+          statusEl.textContent = `Winner: ${winner}`;
+          gameOver = true;
+          return;
+        }
+
+        currentPlayer = currentPlayer === "X" ? "O" : "X";
+        statusEl.textContent = `Current Player: ${currentPlayer}`;
+      }
+
+      function applyMove(index, btn) {
+        boardState[index] = currentPlayer;
+        btn.innerHTML = icons[currentPlayer];
+        btn.classList.remove("faded");
+        moveHistory.push({ index, player: currentPlayer });
+
+        // Remove oldest move if 7th is added
+        if (moveHistory.length > 6) {
+          const removed = moveHistory.shift();
+          boardState[removed.index] = null;
+          const removedBtn = boardEl.children[removed.index];
+          removedBtn.innerHTML = "";
+          removedBtn.classList.remove("faded");
+          lastFadedIndex = null;
+        }
+      }
+
+      function updateVisualState() {
+        // Clear previous faded state
+        if (lastFadedIndex !== null) {
+          const prevBtn = boardEl.children[lastFadedIndex];
+          if (prevBtn && prevBtn.innerHTML !== "") {
+            prevBtn.classList.remove("faded");
+          }
+          lastFadedIndex = null;
+        }
+
+        // Shade the current oldest move (if at capacity)
+        if (moveHistory.length === 6) {
+          const oldest = moveHistory[0];
+          const fadedBtn = boardEl.children[oldest.index];
+          fadedBtn.classList.add("faded");
+          lastFadedIndex = oldest.index;
+        }
+      }
+
+      function checkWinner() {
+        const wins = [
+          [0, 1, 2],
+          [3, 4, 5],
+          [6, 7, 8],
+          [0, 3, 6],
+          [1, 4, 7],
+          [2, 5, 8],
+          [0, 4, 8],
+          [2, 4, 6],
+        ];
+        for (const [a, b, c] of wins) {
+          if (
+            boardState[a] &&
+            boardState[a] === boardState[b] &&
+            boardState[a] === boardState[c]
+          ) {
+            return boardState[a];
+          }
+        }
+        return null;
+      }
+
+      createBoard();
+    </script>
+  </body>
+</html>
