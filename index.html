@@ -6,7 +6,7 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, user-scalable=no"
     />
-    <title>Tic Tac Toe</title>
+    <title>Tic Tac Showdown</title>
     <style>
       body {
         margin: 0;
@@ -16,13 +16,32 @@
       }
 
       #main {
+        position: relative;
         display: flex;
         flex-direction: column;
         align-items: center;
+        max-width: 500px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+
+      #header {
+        margin-top: 20px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .x-turn {
+        background-color: #ef4444;
+      }
+      .o-turn {
+        background-color: #3b82f6;
       }
 
       h1 {
-        margin: 20px 0 10px;
+        margin: 0;
         font-size: 1.5rem;
         color: #333;
       }
@@ -75,21 +94,89 @@
       #status {
         margin-top: 15px;
         font-size: 1.2rem;
-        color: #444;
+        color: white;
+        padding: 4px 7px;
+        border-radius: 5px;
+      }
+
+      #final {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.4s ease;
+      }
+
+      #final.show {
+        opacity: 1;
+        pointer-events: all;
+      }
+
+      #final-inner {
+        background-color: #33333355;
+        border-radius: 10px;
+        padding: 20px;
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      #final-content {
+        background: #ffffffaa;
+        border-radius: 10px;
+        padding: 20px;
+        text-align: center;
+      }
+
+      #reset-btn {
+        margin-top: 10px;
+        padding: 10px 16px;
+        font-size: 1rem;
+        background: #3b82f6;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+      }
+
+      #reset-btn:hover {
+        background: #2563eb;
       }
     </style>
   </head>
   <body>
+    <div id="header">
+      <h1>Tic Tac Showdown</h1>
+      <div id="status" class="x-turn">Player X Starts</div>
+    </div>
     <div id="main">
-      <h1>Tic Tac Toe</h1>
       <div id="board"></div>
-      <div id="status">Current Player: X</div>
+      <div id="final">
+        <div id="final-inner">
+          <div id="final-content">
+            <h2>Game Over</h2>
+            <p id="final-message">Winner: X</p>
+            <button id="reset-btn">Play Again</button>
+          </div>
+        </div>
+      </div>
     </div>
 
     <script>
       const boardEl = document.getElementById("board");
       const statusEl = document.getElementById("status");
-      const boardState = Array(9).fill(null);
+      const finalEl = document.getElementById("final");
+      const finalMessageEl = document.getElementById("final-message");
+      const resetBtn = document.getElementById("reset-btn");
+
+      let boardState = Array(9).fill(null);
       const moveHistory = [];
       let currentPlayer = "X";
       let gameOver = false;
@@ -101,6 +188,7 @@
       };
 
       function createBoard() {
+        boardEl.innerHTML = "";
         for (let i = 0; i < 9; i++) {
           const btn = document.createElement("button");
           btn.classList.add("cell");
@@ -118,13 +206,16 @@
 
         const winner = checkWinner();
         if (winner) {
-          statusEl.textContent = `Winner: ${winner}`;
+          statusEl.textContent = `${winner} Wins!`;
+          finalMessageEl.textContent = `Winner: ${winner}`;
+          finalEl.classList.add("show");
           gameOver = true;
           return;
         }
 
         currentPlayer = currentPlayer === "X" ? "O" : "X";
-        statusEl.textContent = `Current Player: ${currentPlayer}`;
+        statusEl.textContent = `${currentPlayer}'s Turn`;
+        statusEl.className = currentPlayer === "X" ? "x-turn" : "o-turn";
       }
 
       function applyMove(index, btn) {
@@ -133,7 +224,6 @@
         btn.classList.remove("faded");
         moveHistory.push({ index, player: currentPlayer });
 
-        // Remove oldest move if 7th is added
         if (moveHistory.length > 6) {
           const removed = moveHistory.shift();
           boardState[removed.index] = null;
@@ -145,7 +235,6 @@
       }
 
       function updateVisualState() {
-        // Clear previous faded state
         if (lastFadedIndex !== null) {
           const prevBtn = boardEl.children[lastFadedIndex];
           if (prevBtn && prevBtn.innerHTML !== "") {
@@ -154,7 +243,6 @@
           lastFadedIndex = null;
         }
 
-        // Shade the current oldest move (if at capacity)
         if (moveHistory.length === 6) {
           const oldest = moveHistory[0];
           const fadedBtn = boardEl.children[oldest.index];
@@ -185,6 +273,17 @@
         }
         return null;
       }
+
+      resetBtn.addEventListener("click", () => {
+        boardState = Array(9).fill(null);
+        moveHistory.length = 0;
+        lastFadedIndex = null;
+        currentPlayer = "X";
+        gameOver = false;
+        statusEl.textContent = "Player X Starts";
+        finalEl.classList.remove("show");
+        createBoard();
+      });
 
       createBoard();
     </script>
